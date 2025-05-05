@@ -1,0 +1,85 @@
+---
+title: "homework_8"
+author: "Aurna Mukherjee (am96848)"
+date: "2025-04-09"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+[Link to Github](https://github.com/aurnam18/hw8)
+
+```{r setup, include=FALSE, results='hide'}
+knitr::opts_chunk$set(echo = FALSE)
+library(ggplot2)
+library(tidyverse)
+library(kableExtra)
+library(mosaic)
+library(MatchIt)
+```
+
+# **Problem 1**
+
+```{r echo=FALSE}
+library(readr)
+creatinine <- read_csv("creatinine.csv")
+#Part A
+lm_creatinine <- lm(creatclear ~ age, data = creatinine)
+lm_creatinine
+age_55 <- 55*-0.6198 + 147.8129
+```
+
+I got this value by finding the y-intercept and rate of change for the linear regression model of cleatclear and age. I used y=mx+b, plugging in 55 for x and using the constants I had for m and b.
+
+The creatinine clearance rate decreases by 0.6198 for each year of age (-0.6198 ml/minute/year)
+
+```{r echo=FALSE}
+expected_40 <- 40*-0.6198 + 147.8129
+residual_40 <- 135-expected_40
+
+expected_60 <- 60*-0.6198 + 147.8129
+residual_60 <- 112-expected_60
+```
+
+Because the residual is lower for the 60 year old, their creatinine clearance rate is better.
+
+# **Problem 2**
+
+```{r echo=FALSE}
+covid <- read_csv("covid.csv")
+covid_spain <- subset(covid, country=="Spain")
+covid_italy <- subset(covid, country=="Italy")
+lm_spain <- lm(log(deaths)~days_since_first_death, data=covid_spain)
+lm_italy <- lm(log(deaths)~days_since_first_death, data=covid_italy)
+growth_spain <- 0.276
+double_spain <- round(70/0.276, 2)
+boot_spain = do(10000)*lm(log(deaths)~days_since_first_death,
+data=resample(covid_spain))
+confint(boot_spain, level = 0.95)
+growth_italy <- 0.183
+double_italy <- round(70/0.183, 2)
+boot_italy = do(10000)*lm(log(deaths)~days_since_first_death,
+data=resample(covid_italy))
+confint(boot_italy, level = 0.95) #growth rate between 0.16 and 0.21
+```
+
+The estimated growth rate for Spain is 0.276 and the doubling time is 253.62. The 95% confidence interval for the days since the first death is between 0.23 and 0.32. The estimated growth rate in Italy is 0.183 and the doubling time is 382.51. The 95% confidence interval for the days since the first death is between 0.16 and 0.21 in Italy.
+
+```{r echo=FALSE}
+ggplot(covid) + 
+   geom_line(aes(x=days_since_first_death, y=deaths, color=country)) +
+   labs(title = "COVID-19 Deaths Over Time by Country")
+```
+
+# **Problem 3**
+
+```{r echo=FALSE}
+milk <- read_csv("milk.csv")
+lm_milk = lm(log(sales) ~ log(price), data=milk)
+coef(lm_milk)
+
+boot_milk = do(10000)*lm(log(sales) ~ log(price), data=resample(milk))
+confint(boot_milk, level = 0.95) #growth rate between 0.16 and 0.21
+```
+
+Our estimated elasticity is about -1.62, meaning when the price of milk increases by 1%, people want to buy about 1.62% less of it. We are 95% sure that the price elasticity is between -1.45 and 1.77, and the way this confidence interval was calculated is through bootstrapping a linear regression model plotting log(sales) and log(price), since it represents a power law.
